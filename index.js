@@ -1,12 +1,24 @@
-const userController = require("./lib/user");
+
+var port = 9090;
+var interactive_mode = false;
+parseArgs(process.argv);
+
+console.log("Welcome to PiAvia")
+console.log("Loading modules")
+
 const adsb = require("./lib/adsb");
+const userController = require("./lib/user");
 const aviation = require("./lib/aviation");
 
 const express = require('express')
 const app = express()
-const port = 9090;
 
-app.get('/', (req, res) => res.send('Hello World!'))
+
+if(interactive_mode) {
+    adsb.runPrettyPrint();
+}
+
+app.get('/', (req, res) => res.send('PiAvia Backend Root'))
 
 app.get('/adsb', (req, res) =>{ 
     
@@ -84,7 +96,77 @@ app.get('/weather/taf/:icao', function (req, res) {
 
 
 
-app.listen(port, () => {});
+app.listen(port, () => {
+    console.log("PiAvia listening on port:", port)
+});
 
 
-console.log("Welcome to PiAvia")
+
+function printHelp() {
+
+    console.log("Usage: piavia [options] <input>");
+    console.log();
+    console.log("-h\t\tPrint usage information.")
+    console.log("-v\t\tPrint PiAvia version.")
+    console.log("-i\t\tRun PiAvia in interactive mode.")
+    console.log("-p <port>\tSet PiAvia port.")
+}
+
+
+function printVersion() {
+
+    console.log("PiAvia - Version 0.0.1");
+}
+
+function parseArgs(argv) {
+    if(argv.length > 2) {
+
+        var arg_help = false;
+        var arg_port = false;
+        var arg_inter = false;
+        var arg_version = false;
+        var new_port;
+        
+        argv.forEach((val, index)=> {
+            if(val == "-h")
+                arg_help = true;
+    
+            if(val == "-p") {
+                arg_port = true;
+                new_port = argv[index+1];    
+            }
+               
+    
+            if(val == "-i")
+                arg_inter = true;
+    
+            if(val == "-v")
+                arg_version = true;
+        })
+    
+        if(arg_help) {
+            printHelp();
+            process.exit();
+        }
+    
+        if(arg_version) {
+            printVersion();
+            process.exit();
+        }
+    
+        if(arg_inter) {
+            interactive_mode = true;
+        }
+    
+        if(arg_port) {
+            if(!isNaN(new_port)){
+                    port = new_port;
+            } else {
+                console.log("Write a valid port value.")
+                process.exit();
+            }
+        }
+    
+    
+    }
+}
