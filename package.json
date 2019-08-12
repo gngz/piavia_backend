@@ -1,16 +1,19 @@
 {
-  "name": "piavia-backend",
-  "version": "1.0.0",
-  "description": "Backend for PiAvia Portal",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "Gonçalo Passos",
-  "license": "ISC",
+  "name": "piavia_backend",
+  "version": "0.0.1",
+  "main": "main.js",
+  "license": "MIT",
   "dependencies": {
+    "bcrypt": "^3.0.6",
+    "body-parser": "^1.19.0",
     "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
     "request": "^2.88.0",
-    "xml2js": "^0.4.19"
+    "sqlite3": "^4.0.9",
+    "xml2js": "^0.4.19",
+    "yargs": "^13.3.0"
+  },
+  "scripts": {
+    "start": "nodemon main.js"
   }
 }
