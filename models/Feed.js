@@ -41,12 +41,24 @@ function getFlightHistoryByIcao24(icao24) {
         
    
    
-        return null
+        return []
 }
 
 
 function getFlightFeed() {
     return flightInformation.slice();
+}
+
+function getFlightFeedByCoords(posA,posB) {
+    let feed = getFlightFeed()
+
+    feed = feed.filter((flight) => {
+        
+        return (flight.latitude <= posA.latitude && flight.latitude >= posB.latitude) &&
+                (flight.longitude >= posA.longitude && flight.longitude <= posB.longitude)
+    })
+
+    return feed
 }
 
 function getFlightByIcao24(icao24){
@@ -74,18 +86,37 @@ client.on('data', function(data) {
         var altitude = Number(message[11]) 
         var gspeed = Number(message[12])
         var heading = Number(message[13])
-        var latitude = Number(message[14])
-        var longitude = Number(message[15])
+        
         var vspeed = Number(message[16])
         var squawk = Number(message[17])
         var onGround = adsbBool(Number(message[21]))
         var ident = adsbBool(Number(20))
-        var lastMsg = Date.now();
+        
+
+        var latitude = message[14]
+        var longitude = message[15]
+
+        if(latitude == "" && longitude == "") {
+            latitude = null
+            longitude = null
+        } else {
+            latitude = Number(latitude)
+            longitude = Number(longitude)
+        }
 
         var flight  = exists(flightInformation,icao24)
 
         if(!flight) {
-            flight = {icao24};
+            flight = {  icao24,
+                        "callsign" : null,
+                        "altitude" : null,
+                        "gpseed"   : null,
+                        "heading"  : null,
+                        "vspeed"   : null,
+                        "squawk"   : null,
+                        "onGround" : null,
+                        "ident"    : null,
+                    };
             flightInformation.push(flight);
         }
 
@@ -96,12 +127,12 @@ client.on('data', function(data) {
             flight.altitude = altitude;
             flight.gspeed = gspeed;
             flight.heading = heading;
-            flight.latitude = latitude;
-            flight.longitude = longitude;
-            flight.isGround = onGround;
+            flight.latitude = latitude ;
+            flight.longitude = longitude ;
+            flight.onGround = onGround;
         } else if (transType == 3) {
             flight.altitude = altitude;
-            flight.latitude = latitude;
+            flight.latitude = latitude ;
             flight.longitude = longitude;
             flight.isGround = onGround;
             flight.ident = ident;
@@ -125,8 +156,8 @@ client.on('data', function(data) {
             flight.isGround = onGround;
         }
         
-        flight.lastMsg = lastMsg
-        //console.table(flightInformation)
+        flight.lastMsg = Date.now()  
+      
     }
 
 })
@@ -146,11 +177,11 @@ function exists(array = [], icao24) {
 
 function maintenance() {
     flightInformation.forEach((flight, idx) => {
-        const secs = Math.floor( (Date.now() - flight.lastMsg) / 1000);
+        var secs = Math.floor( (Date.now() - flight.lastMsg) / 1000);
         if(secs >= 60) {
             flightInformation.splice(idx,1)
             historyIdx = flightHistroy.findIndex(history => history.icao24 == flight.icao24)
-            flightHistroy.splice(historyIdx,1)
+            //flightHistroy.splice(historyIdx,1)
 
         }
             
@@ -158,8 +189,22 @@ function maintenance() {
 }
 
 function history() {
+    console.clear()
+    flightInformation.forEach(val => {
+        
+        console.log(val.icao24, val.callsign, Math.floor((Date.now() - val.lastMsg)/1000 ) )
+    })
+
+
     flightInformation.forEach(flight => {
         if(flight.icao24 && flight.altitude && flight.heading && flight.latitude && flight.longitude) {
+            
+
+            
+            var histObj  = exists(flightHistroy,flight.icao24)
+
+         
+        
             var obj = {
     
                 altitude  : flight.altitude,
@@ -168,15 +213,16 @@ function history() {
                 longitude : flight.longitude,
             }
 
-            
-            var histObj  = exists(flightHistroy,flight.icao24)
 
             if(!histObj) {
+                obj.id = 0
                 flightHistroy.push({
                     icao24 : flight.icao24,
                     history : [obj]
                 });
             } else {
+                const newid = histObj.history.slice(-1)[0].id + 1
+                obj.id = newid;
                 histObj.history.push(obj)
             }
             
@@ -198,5 +244,6 @@ module.exports = {
     getFlightHistory,
     getFlightByIcao24,
     getFlightHistoryByIcao24,
+    getFlightFeedByCoords
 }
 

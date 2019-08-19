@@ -112,8 +112,32 @@ app.post('/login', async (req, res) =>{
 
 app.get('/feed', (req,res) => {
     let data = FeedModel.getFlightFeed() ;
+
+    data = data.filter(flight => {
+        return flight.latitude != undefined && flight.longitude != undefined
+    })
+
     res.json(data)
 })
+
+
+app.get("/feed/:latA/:longA/:latB/:longB", (req,res) => {  
+
+    const latA = req.params.latA
+    const longA = req.params.longA
+    const latB = req.params.latB
+    const longB = req.params.longB
+
+    if(isNaN(latA) && isNaN(latB) && isNaN (longA) && isNaN(longB)) {
+        res.status(400).json({"error" : "Invalid positions"})
+    } else {
+        let data =  FeedModel.getFlightFeedByCoords({"latitude": latA, "longitude" : longA} , {"latitude" : latB, "longitude" : longB});
+
+        res.json(data)
+    }
+
+})
+
 
 
 app.get('/weather/metar/:icao',  (req, res) => { 
@@ -186,7 +210,7 @@ app.get('/flight/:icao24',  async (req, res) => {
             }
 
     
-            res.json({ aircraft : aircraft_data, route : route_data  || {}, flight: flight_data, history: flight_history})
+            res.json({ aircraft : aircraft_data || {icao24}, route : route_data  || {}, flight: flight_data, history: flight_history})
         } catch (ex) {
             console.log(ex)
         }

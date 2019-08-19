@@ -14,6 +14,7 @@
     "yargs": "^13.3.0"
   },
   "scripts": {
-    "start": "nodemon main.js"
+    "start": "nodemon main.js",
+    "debug": "nodemon --inspect main.js"
   }
 }
